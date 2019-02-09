@@ -30,15 +30,21 @@ namespace  x3 = boost::spirit::x3;
     bool operator()(ast::nil) const {BOOST_ASSERT(0); return false;}
     bool operator()(ast::signals const& x)  ;
     bool operator()(ast::signal const& x)  ;
+    bool operator()(ast::groups const& x);
+    bool operator()(ast::group const& x);
     bool start(ast::session const& x) ;
     void print_signals() const;
+    void print_groups() const;
 
     private:
     std::map<std::string, ast::signal_type> signals;
+    std::map<std::string, std::vector<std::string>> groups;
     error_handler_type error_handler;
 
     void add_signal(ast::signal const& x) ;
     bool find_signal(std::string const& x);
+    bool find_group(std::string const& x);
+    void add_group(std::string const& x, std::string const& y);
     };
 }
 }

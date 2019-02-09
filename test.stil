@@ -9,3 +9,8 @@ Signals {
 C In;
 D Out;
 }
+
+SignalGroups {
+a1 = A + B;
+b1 = a1 + C;
+}

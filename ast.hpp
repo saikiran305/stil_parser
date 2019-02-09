@@ -29,6 +29,11 @@ namespace client {
        supply,
        pseudo
       };
+    enum optoken
+    {
+        op_plus,
+        op_minus
+    };
 
     struct signal : x3::position_tagged {
       signal(
@@ -44,11 +49,24 @@ namespace client {
 
     struct signals : std::list<signal> {};
     //  STIL Signals End
+    // Groups
+    struct group : x3::position_tagged {
+/*
+        group() {}
+      group(std::string const& name , std::vector<std::string> const& signals)
+    :name(name), signals(signals) {}
+*/
+        //typedef std::string value_type;
+      std::string name;
+      std::list<std::string> items;
+    };
+    struct groups : std::list<group> {};
 
     // Block
     struct block : x3::variant <
             nil,
-            signals
+            signals,
+            groups
             >
     {
         using base_type::base_type;
@@ -57,11 +75,6 @@ namespace client {
     // session
     struct session : std::list<block> {};
 
-    struct group : x3::position_tagged {
-      group(std::list<signal> const& signals)
-    :signals(signals) {}
-     std::list<signal> signals;
-    };
 
     struct stil_ast : x3::position_tagged
     {
@@ -85,6 +98,19 @@ namespace client {
       for (auto v: var) out << v ;
       return out;
     }
+    inline std::ostream& operator<<(std::ostream& out, group const& var)
+        {
+          out << "Group: " << var.name <<":";
+          //for (auto v: var.signals) out << v;
+          //out << "\n";
+          return out;
+        }
+
+    inline std::ostream& operator<<(std::ostream& out, groups const& var)
+        {
+          for (auto v: var) out << v ;
+          return out;
+        }
 
     struct Visitor {
         void operator()(signals const& var)

@@ -65,7 +65,10 @@ int main(int argc, char **argv)
         << ast.version << std::endl;
 
       //for (auto block:ast.blocks) boost::apply_visitor(v,block);
-      if (compiler.start(ast.blocks)) compiler.print_signals();
+      if (compiler.start(ast.blocks)) {
+          compiler.print_signals();
+          compiler.print_groups();
+      }
              return 0;
     }
   else {

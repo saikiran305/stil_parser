@@ -46,6 +46,7 @@ void add_keywords() {
 
 struct stil_session_class;
 struct signal_item_class;
+struct group_item_class;
 
 x3::rule<class version_class, std::string> const version = "version";
 
@@ -57,6 +58,12 @@ x3::rule<class block_class, ast::block> const block = "block";
 x3::rule<class signal_name_class, std::string> const signal_name = "signal_name";
 x3::rule<signal_item_class, ast::signal> const signal_item = "signal_item";
 x3::rule<class signals, ast::signals> const signals = "signals";
+
+//Group
+x3::rule<class group_name_class, std::string> const group_name = "group_name";
+x3::rule<group_item_class, ast::group> const group_item = "group_item";
+x3::rule<class groups, ast::groups> const groups = "groups";
+
 
 x3::rule<stil_session_class, ast::stil_ast> const stil_session = "stil_session";
 
@@ -78,10 +85,24 @@ auto const signals_def = lit("Signals")
   >> *signal_item
   > "}";
 
+//Groups Grammar
+auto const group_name_def = !keywords >> identifier;
+auto const group_item_def = group_name >
+        '='
+        >
+        group_name % '+'
+        > ';'
+        ;
+auto const groups_def = lit("SignalGroups")
+        > "{"
+        >> *group_item
+        > "}";
+
 auto const block_def =
         //x3::eps
         signals
-        ;
+       | groups
+                ;
 auto const session_def = *block;
 auto const stil_session_def = version
         > session;
@@ -91,12 +112,16 @@ BOOST_SPIRIT_DEFINE(
         signal_name,
         signal_item,
         signals,
+        group_name,
+        group_item,
+        groups,
         block,
         session,
         stil_session
         )
 struct stil_session_class : error_handler_base, x3::annotate_on_success {};
 struct signal_item_class : x3::annotate_on_success {};
+struct group_item_class : x3::annotate_on_success {};
 }
 }
 
