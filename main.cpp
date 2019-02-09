@@ -4,6 +4,7 @@
 #include "error_handler.hpp"
 #include "config.hpp"
 #include "skipper.hpp"
+#include "compiler.hpp"
 #include <fstream>
 
 int main(int argc, char **argv)
@@ -43,6 +44,8 @@ int main(int argc, char **argv)
   error_handler_type error_handler(iter, end, std::cerr);
   client::ast::stil_ast ast;
 
+  client::vecgen::compiler compiler(error_handler);
+
   auto const parser =
     with<client::parser::error_handler_tag>(std::ref(error_handler))
     [
@@ -61,9 +64,9 @@ int main(int argc, char **argv)
       std::cout << "STIL version : "
         << ast.version << std::endl;
 
-      for (auto block:ast.blocks) boost::apply_visitor(v,block);
-      //boost::apply_visitor(v, ast.blocks);
-      return 0;
+      //for (auto block:ast.blocks) boost::apply_visitor(v,block);
+      if (compiler.start(ast.blocks)) compiler.print_signals();
+             return 0;
     }
   else {
     std::cout << "Parsing failed \n";

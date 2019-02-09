@@ -45,6 +45,7 @@ void add_keywords() {
 }
 
 struct stil_session_class;
+struct signal_item_class;
 
 x3::rule<class version_class, std::string> const version = "version";
 
@@ -54,7 +55,7 @@ x3::rule<class block_class, ast::block> const block = "block";
 
 //Signals
 x3::rule<class signal_name_class, std::string> const signal_name = "signal_name";
-x3::rule<class signal_item_class, ast::signal> const signal_item = "signal_item";
+x3::rule<signal_item_class, ast::signal> const signal_item = "signal_item";
 x3::rule<class signals, ast::signals> const signals = "signals";
 
 x3::rule<stil_session_class, ast::stil_ast> const stil_session = "stil_session";
@@ -95,7 +96,7 @@ BOOST_SPIRIT_DEFINE(
         stil_session
         )
 struct stil_session_class : error_handler_base, x3::annotate_on_success {};
-
+struct signal_item_class : x3::annotate_on_success {};
 }
 }
 
