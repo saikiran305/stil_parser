@@ -1,0 +1,10 @@
+STIL 1.0;
+Signals {
+A In;
+B  Out;
+}
+
+Signals {
+C In;
+D  Out;
+}
