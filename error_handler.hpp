@@ -1,0 +1,4 @@
+#ifndef ERROR_HANDLER_HPP
+#define ERROR_HANDLER_HPP
+
+#endif // ERROR_HANDLER_HPP
