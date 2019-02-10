@@ -4,7 +4,7 @@
 #include "error_handler.hpp"
 #include "config.hpp"
 #include "skipper.hpp"
-#include "compiler.hpp"
+//#include "compiler.hpp"
 #include <fstream>
 
 int main(int argc, char **argv)
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   error_handler_type error_handler(iter, end, std::cerr);
   client::ast::stil_ast ast;
 
-  client::vecgen::compiler compiler(error_handler);
+  //client::vecgen::compiler compiler(error_handler);
 
   auto const parser =
     with<client::parser::error_handler_tag>(std::ref(error_handler))
@@ -65,10 +65,11 @@ int main(int argc, char **argv)
         << ast.version << std::endl;
 
       //for (auto block:ast.blocks) boost::apply_visitor(v,block);
+      /*
       if (compiler.start(ast.blocks)) {
           compiler.print_signals();
           compiler.print_groups();
-      }
+      } */
              return 0;
     }
   else {

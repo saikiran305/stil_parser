@@ -5,6 +5,7 @@
 #include <boost/variant/recursive_variant.hpp>
 
 #include <boost/fusion/include/io.hpp>
+#include <boost/fusion/include/std_pair.hpp>
 #include <boost/optional.hpp>
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
@@ -62,11 +63,36 @@ namespace client {
     };
     struct groups : std::list<group> {};
 
+    //Timing and waveform table
+    typedef  std::pair<int, std::string> time_event;
+    /*
+    struct time_event {
+        int time;
+        std::string values;
+    };
+    */
+    struct sig_tim_event {
+        std::string name;
+        std::string values;
+        std::list<time_event> events;
+    };
+
+    struct wavetable {
+        std::string name;
+        int period;
+        std::list<sig_tim_event> sig_events;
+    };
+
+    struct timing {
+        std::list<wavetable>  wavetables;
+    };
+
     // Block
     struct block : x3::variant <
             nil,
             signals,
-            groups
+            groups,
+            timing
             >
     {
         using base_type::base_type;

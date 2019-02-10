@@ -14,3 +14,13 @@ SignalGroups {
 a1 = A + B;
 b1 = a1 + C;
 }
+
+Timing {
+    WaveformTable one
+    {
+        Period '500ns' ;
+        Waveforms {
+        A { 10 { '0ns' U/D; } }
+        }
+    }
+}

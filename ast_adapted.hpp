@@ -13,4 +13,10 @@ BOOST_FUSION_ADAPT_STRUCT(client::ast::group,
 BOOST_FUSION_ADAPT_STRUCT(client::ast::stil_ast,
                           version, blocks
                           )
+//BOOST_FUSION_ADAPT_STRUCT(client::ast::time_event, time, values)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::sig_tim_event, name, values, events)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::wavetable, name, period, sig_events)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::timing,
+                          wavetables
+                          )
 #endif // AST_ADAPTED_HPP

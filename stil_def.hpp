@@ -16,6 +16,7 @@ namespace parser {
 using x3::raw;
 using x3::lexeme;
 using x3::lit;
+using x3::int_;
 using namespace x3::ascii;
 
 x3::symbols<char> keywords;
@@ -27,6 +28,10 @@ void add_keywords() {
   ("STIL")
   ("Signals")
   ("SignalGroups")
+  ("Timing")
+  ("Period")
+  ("WaveformTable")
+  ("Waveforms")
   ("In")
   ("Out")
   ("InOut")
@@ -64,7 +69,15 @@ x3::rule<class group_name_class, std::string> const group_name = "group_name";
 x3::rule<group_item_class, ast::group> const group_item = "group_item";
 x3::rule<class groups, ast::groups> const groups = "groups";
 
+//Timing
+x3::rule<class eu_class, int> const eu = "eu";
+x3::rule<class wfc_class, char> const wfc = "wfc";
+x3::rule<class tim_event_class, ast::time_event>const tim_event = "tim_event";
+x3::rule<class sig_time_event_class , ast::sig_tim_event> const sig_time_event = "sig_time_event";
+x3::rule<class wavetable_class, ast::wavetable> const wavetable = "wavetable";
+x3::rule<class timing_class, ast::timing> const timing = "timing";
 
+//session
 x3::rule<stil_session_class, ast::stil_ast> const stil_session = "stil_session";
 
 //Grammar Start
@@ -97,11 +110,46 @@ auto const groups_def = lit("SignalGroups")
         > "{"
         >> *group_item
         > "}";
+// Timing and Wavefromtable grammar
+auto const eu_def = quote >> int_ >> lit("ns") >> quote;
+auto const wfc_def = x3::alnum;
+/*
+        | x3::digit
+        | char_('#')
+        | char_('%')
+        ;*/
 
+auto const tim_event_def = eu >> (char_ % '/') >> ";";
+auto const sig_time_event_def =
+        identifier
+        > "{"
+        >> +(wfc)
+        >> "{"
+        >> +(tim_event_def)
+        >> "}"
+        >> "}"
+           ;
+auto const wavetable_def = lit("WaveformTable")
+        > identifier
+        > "{"
+        > lit("Period")
+        >> eu > ";"
+        >> lit("Waveforms")
+        > "{"
+        >> +(sig_time_event)
+        > "}"
+        > "}"
+           ;
+auto const timing_def = lit("Timing")
+        > "{"
+        >> *(wavetable)
+        >> "}"
+           ;
 auto const block_def =
         //x3::eps
         signals
        | groups
+       | timing
                 ;
 auto const session_def = *block;
 auto const stil_session_def = version
@@ -115,6 +163,12 @@ BOOST_SPIRIT_DEFINE(
         group_name,
         group_item,
         groups,
+        eu,
+        wfc,
+        tim_event,
+        sig_time_event,
+        wavetable,
+        timing,
         block,
         session,
         stil_session

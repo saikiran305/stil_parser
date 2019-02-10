@@ -7,8 +7,8 @@ LIBS += -lboost_system
 SOURCES += \
         main.cpp \
     skipper.cpp \
-    stil.cpp \
-    compiler.cpp
+    stil.cpp
+    #compiler.cpp
 
 HEADERS += \
     ast.hpp \
@@ -19,8 +19,8 @@ HEADERS += \
     common.hpp \
     skipper_def.hpp \
     stil.hpp \
-    stil_def.hpp \
-    compiler.hpp
+    stil_def.hpp
+    #compiler.hpp
 
 DISTFILES += \
     test.stil
