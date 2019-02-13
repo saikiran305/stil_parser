@@ -32,6 +32,10 @@ namespace  x3 = boost::spirit::x3;
     bool operator()(ast::signal const& x)  ;
     bool operator()(ast::groups const& x);
     bool operator()(ast::group const& x);
+    bool operator()(ast::timing const& x);
+    bool operator()(ast::wavetable const& x);
+    bool operator()(ast::time_event const& x);
+    bool operator()(ast::sig_tim_event const& x);
     bool start(ast::session const& x) ;
     void print_signals() const;
     void print_groups() const;
@@ -39,6 +43,7 @@ namespace  x3 = boost::spirit::x3;
     private:
     std::map<std::string, ast::signal_type> signals;
     std::map<std::string, std::vector<std::string>> groups;
+    std::map<std::string, ast::wavetable> wavetables;
     error_handler_type error_handler;
 
     void add_signal(ast::signal const& x) ;

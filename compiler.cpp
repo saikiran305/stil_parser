@@ -71,6 +71,32 @@ bool compiler::operator()(const ast::group &x)
     return true;
 }
 
+bool compiler::operator()(const ast::timing &x)
+{
+    for (auto const& s:x.wavetables)
+            if (!(*this)(s)) return  false;
+return true;
+
+}
+
+bool compiler::operator()(const ast::wavetable &x)
+{
+    wavetables[x.name] = x;
+    return true;
+}
+
+bool compiler::operator()(const ast::time_event &x)
+{
+    // TODO
+    return  true;
+}
+
+bool compiler::operator()(const ast::sig_tim_event &x)
+{
+    //TODO
+    return  true;
+}
+
 bool compiler::start(const ast::session &x)
 {
     for (auto const& s:x)
