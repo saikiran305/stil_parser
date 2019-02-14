@@ -23,4 +23,12 @@ Timing {
         A { 10 { '0ns' U/D; } }
         }
     }
+    WaveformTable two
+    {
+        Period '500ns' ;
+        Waveforms {
+        A { 10 { '0ns' U/D; } }
+        B { 10 { '0ns' U/D; } }
+        }
+    }
 }

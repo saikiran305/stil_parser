@@ -39,6 +39,7 @@ namespace  x3 = boost::spirit::x3;
     bool start(ast::session const& x) ;
     void print_signals() const;
     void print_groups() const;
+        void print_wavetables() const;
 
     private:
     std::map<std::string, ast::signal_type> signals;

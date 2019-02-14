@@ -69,6 +69,7 @@ int main(int argc, char **argv)
       if (compiler.start(ast.blocks)) {
           compiler.print_signals();
           compiler.print_groups();
+          compiler.print_wavetables();
       }
              return 0;
     }
