@@ -125,11 +125,11 @@ namespace client {
             
         }
         
-        void compiler::print_wavetables() const { 
+        void compiler::print_wavetables() const {
             std::cout << "======Wavetables======\n";
             for(auto t: wavetables) {
                 std::cout << "Wavetable: " << t.first
-                          << std::endl ;
+                << std::endl ;
                 std::cout << "\t Period : " << t.second.period
                 << std::endl;
                 std::cout << "\t Signals : ";
@@ -139,6 +139,36 @@ namespace client {
                 
             }
         }
+        
+        bool compiler::operator()(const ast::patburst &x) {
+            return true;
+        }
+        
+        bool compiler::operator()(const ast::patexec &x) { 
+            return true;
+        }
+        
+        bool compiler::operator()(const ast::vec_stmt &x) { 
+            return true;
+        }
+        
+        
+        bool compiler::operator()(const ast::pat_stmt &x) { 
+            return true;
+        }
+        
+        bool compiler::operator()(const ast::pattern &x) { 
+            return true;
+        }
+        
+        bool compiler::operator()(const ast::vec_data &x) { 
+            return true;
+        }
+        
+        
+        
+        
+        
         
         
     }

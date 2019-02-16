@@ -19,7 +19,7 @@ int main(int argc, char **argv)
       std::cerr << "Error: No input file provided." << std::endl;
     }
   std::ifstream in(filename, std::ios_base::in);
-  std::cout << "Opening file:" << filename;
+    std::cout << "Opening file:" << filename << std::endl;
 
   if (!in)
     {

@@ -1,0 +1,109 @@
+/*
+STIL 1.0;
+
+Signals {
+A In;
+B  Out;
+}
+
+Signals {
+C In;
+D Out;
+}
+
+SignalGroups {
+a1 = A + B;
+b1 = a1 + C;
+}
+
+Timing {
+    WaveformTable one
+    {
+        Period '500ns' ;
+        Waveforms {
+        A { 10 { '0ns' U/D; } }
+        }
+    }
+    WaveformTable two
+    {
+        Period '500ns' ;
+        Waveforms {
+        A { 10 { '0ns' U/D; } }
+        B { 10 { '0ns' U/D; } }
+        }
+    }
+}
+
+
+PatternBurst scanpats
+    {
+    PatList { scan_test; }
+    }
+
+
+PatternExec
+{
+    Timing STUCK_timing;
+    PatternBurst scanpats;
+}
+*/
+STIL 1.0;
+
+Signals {
+DIR In;
+OE_ In;
+A0 InOut; A1 InOut; A2 InOut; A3 InOut;
+A4 InOut; A5 InOut; A6 InOut; A7 InOut;
+B0 InOut; B1 InOut; B2 InOut; B3 InOut;
+B4 InOut; B5 InOut; B6 InOut; B7 InOut;
+}
+
+
+SignalGroups {
+ABUS = 'A0 + A1 + A2 + A3 + A4 + A5 + A6 + A7';
+BBUS = 'B0 + B1 + B2 + B3 + B4 + B5 + B6 + B7';
+ALL = 'DIR + OE_ + ABUS + BBUS';
+SI1 = 'A0' { ScanIn 30; }
+SI2 = 'A1' { ScanIn 34; }
+SO1 = 'B0' { ScanOut 30; }
+SO2 = 'B1' { ScanOut 34; }
+MASTER= 'A6';
+SLAVE = 'A7';
+}
+
+Timing {
+WaveformTable one {
+Period '500ns';
+Waveforms {
+DIR { 10 { '0ns' U/D; }}
+OE_ { 10 { '0ns' U; '200ns' U/D; '300ns' U; }}
+ABUS { 10 { '10ns' U/D; }}
+BBUS { 10 { '10ns' U/D; }}
+ABUS {HLZX { '0ns' Z;'0ns' X; '260ns' H/L/T/X;'280ns' X;}}
+BBUS {HLZX { '0ns' Z;'0ns' X; '260ns' H/L/T/X;'280ns' X;}}
+}
+} // end WaveformTable one
+WaveformTable two {
+Period '100ns';
+Waveforms {
+ALL { 10 { '0ns' U/D; }}
+ALL { HLZX{ '0ns' Z; '50ns' H/L/T/X; }}
+MASTER{ P { '0ns' D; '10ns' U; '40ns' D; }}
+SLAVE { P { '0ns' D; '60ns' U; '90ns' D; }}
+}
+}
+} // end WaveformTab
+PatternBurst scanpats {
+PatList { scan_test; }
+}
+PatternExec {
+Timing STUCK_timing;
+PatternBurst scanpats;
+}
+
+Pattern "scan" {
+W two;
+V { ALL=00ZZZZZZZZXXXXXXXX; }
+// define all signals
+}
+

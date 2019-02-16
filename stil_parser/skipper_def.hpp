@@ -14,6 +14,8 @@ namespace client
       skipper_type const skipper = "skipper";
       auto const skipper_def =
     x3::ascii::space
+        | x3::char_('"')
+        | x3::char_("'")
     | (x3::lit("/*") > x3::seek[x3::lit("*/")])
     | (x3::lit("//") > x3::seek[x3::eol | x3::eoi])
 
