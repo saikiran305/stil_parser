@@ -141,8 +141,9 @@ namespace client {
         auto const group_item_def = group_name >>
         '='
         >>
-        (group_name % '+')  >> -lit(";")
-        >> -(x3::omit["{" >> scan_signal_type >> int_ >> ";" >> "}"])
+        (group_name % '+')
+        >> (lit(";") | x3::omit[sig_stmt])
+        //>> -(x3::omit["{" >> scan_signal_type >> int_ >> ";" >> "}"])
         //> ';'
         ;
         auto const groups_def = lit("SignalGroups")

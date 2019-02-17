@@ -5,6 +5,8 @@
 
 #include <map>
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 namespace client {
     namespace vecgen {
@@ -20,11 +22,13 @@ namespace client {
             
             template<typename ErrorHandler>
             compiler(
-                     ErrorHandler const& error_handler
+                     ErrorHandler const& error_handler,
+                     std::string const& outfilename
                      ) : error_handler(
             [&](x3::position_tagged pos, std::string const& msg)
                                        {error_handler(pos,msg);}
-                                       )
+                                       ),
+            outfilename(outfilename)
             {}
             
             bool operator()(ast::nil) const {BOOST_ASSERT(0); return false;}
@@ -39,7 +43,7 @@ namespace client {
             bool operator()(ast::patburst const& x);
             bool operator()(ast::patexec const& x);
             bool operator()(ast::pattern const& x);
-            bool operator()(ast::pat_stmt const& x);
+            bool operator()(ast::cur_wft const& x);
             bool operator()(ast::vec_stmt const& x);
             bool operator()(ast::vec_data const& x);
             
@@ -49,15 +53,25 @@ namespace client {
             void print_wavetables() const;
             
         private:
+            std::string outfilename;
+            std::ofstream fout;
             std::map<std::string, ast::signal_type> signals;
             std::map<std::string, std::vector<std::string>> groups;
             std::map<std::string, ast::wavetable> wavetables;
+            std::map<std::string, std::vector<int> > wavetable_sampletimes;
+            std::vector<int> sampletimes;
+            std::string cur_wft;
+            std::map<std::string, std::string> cur_vec;
             error_handler_type error_handler;
             
             void add_signal(ast::signal const& x) ;
             bool find_signal(std::string const& x);
             bool find_group(std::string const& x);
             void add_group(std::string const& x, std::string const& y);
+            
+            void write_header();
+            void write_vec(int t);
+            
         };
     }
 }

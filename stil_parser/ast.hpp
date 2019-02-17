@@ -15,6 +15,8 @@
 #include <iostream>
 #include <boost/optional.hpp>
 #include <boost/optional/optional_io.hpp>
+#include <algorithm>
+#include <string>
 
 namespace client {
     namespace ast {
@@ -50,11 +52,11 @@ namespace client {
         };
         struct signal : x3::position_tagged {
             /*
-            signal(
-                   std::string const& name = "",
-                   signal_type const& type = in
-                   )
-            : name(name) , type(type) {} */
+             signal(
+             std::string const& name = "",
+             signal_type const& type = in
+             )
+             : name(name) , type(type) {} */
             std::string name;
             signal_type type;
             boost::optional<sig_stmt> scan_sig_type;
@@ -95,6 +97,34 @@ namespace client {
             std::string name;
             int period;
             std::list<sig_tim_event> sig_events;
+            
+            /*
+            std::pair<bool,std::string> getvalue(std::string sig, int time, char value)
+            {
+                std::cout << "Searching : "
+                << sig << " "
+                << time << " "
+                << value
+                << std::endl;
+                for (auto const& e:sig_events)
+                {
+                    std::cout << e.name << std::endl;
+                    
+                    if (e.name == sig)
+                    {
+                        for (auto& l:e.events)
+                            if (time == l.first) {
+                                std::size_t found = e.values.find(value);
+                                if (e.values.size() == l.second.size())
+                                    return std::make_pair(true, l.second.substr(found,1));
+                                else return std::make_pair(true, l.second);
+                            }
+                        
+                    }
+                }
+                return std::make_pair(false, "no");
+            }
+             */
         };
         
         struct timing {
