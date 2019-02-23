@@ -17,59 +17,13 @@ namespace client {
         struct sigtiming {
             std::vector<int> sampletimes;
             std::map<int, std::map<char, char> > vec_values;
-            
             sigtiming() {}
+            sigtiming(ast::sig_tim_event const& x);
+            sigtiming(std::list<ast::time_event> const& events, std::string const& values);
+            void add_events(std::list<ast::time_event> const& events, std::string const& values);
+            void print();
+            void get_value(int t, char value, bool& is_valid, char& out);
             
-            sigtiming(ast::sig_tim_event const& x)
-            {
-                for (auto const& event:x.events)
-                {
-                    sampletimes.push_back(event.first);
-                    for (int i = 0; i < event.second.size(); ++i) {
-                        if (x.values.size() == event.second.size())
-                            vec_values[event.first][x.values.at(i)] = event.second.at(i);
-                        else vec_values[event.first][x.values.at(i)] = event.second.at(0);
-                    }
-                }
-                std::sort(sampletimes.begin(),
-                          sampletimes.end());
-            }
-            sigtiming(std::list<ast::time_event> const& events, std::string const& values)
-            {
-                for (auto const& event:events)
-                {
-                    sampletimes.push_back(event.first);
-                    for (int i = 0; i < event.second.size(); ++i) {
-                        if (values.size() == event.second.size())
-                            vec_values[event.first][values.at(i)] = event.second.at(i);
-                        else vec_values[event.first][values.at(i)] = event.second.at(0);
-                    }
-                    
-                }
-            }
-            
-            void print()
-            {
-                for (auto const& item:vec_values) {
-                    std::cout << item.first << ":: ";
-                    for (auto const& val:item.second)
-                        std::cout << val.first << " : " << val.second << " ";
-                std::cout << std::endl;
-                }
-            }
-            
-            std::pair<bool, char> get_value(int t, char value) {
-//                std::cout << "Searching : "
-//                << t << " "
-//                << value
-//                << std::endl;
-                if (std::binary_search(sampletimes.begin(), sampletimes.end(), t))
-                    {
-                        std:: cout << vec_values[t][value];
-                        return std::make_pair(true, vec_values[t][value]);
-                    }
-                    else return std::make_pair(false, 'n');
-            }
         };
         
         struct wavetable {
@@ -120,6 +74,8 @@ namespace client {
         private:
             std::string outfilename;
             std::ofstream fout;
+            bool vec_changed;
+            
             std::map<std::string, ast::signal_type> signals;
             std::map<std::string, std::vector<std::string>> groups;
             std::map<std::string, wavetable > wavetables;
@@ -133,6 +89,7 @@ namespace client {
             bool find_signal(std::string const& x);
             bool find_group(std::string const& x);
             void add_group(std::string const& x, std::string const& y);
+            void add_sigtiming(std::string const& name, std::list<ast::time_event> const& events, std::string const& values);
             
             void write_header();
             void write_vec(int t);

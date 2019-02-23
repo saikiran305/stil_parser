@@ -5,6 +5,69 @@
 
 namespace client {
     namespace vecgen {
+        
+        void sigtiming::add_events(std::list<ast::time_event> const& events, std::string const& values)
+        {
+            for (auto const& event:events)
+            {
+                sampletimes.push_back(event.first);
+                for (int i = 0; i < values.size(); ++i) {
+                    if (values.size() == event.second.size())
+                        vec_values[event.first][values.at(i)] = event.second.at(i);
+                    else vec_values[event.first][values.at(i)] = event.second.at(0);
+                }
+                
+            }
+        }
+        
+        sigtiming::sigtiming(ast::sig_tim_event const& x)
+        {
+            std::cout << "Construct with sig_tim_event \n";
+            add_events(x.events, x.values);
+            std::sort(sampletimes.begin(),
+                      sampletimes.end());
+        }
+        
+        sigtiming::sigtiming(std::list<ast::time_event> const& events, std::string const& values)
+        {
+            add_events(events, values);
+        }
+        
+        
+        void sigtiming::print()
+        {
+            std::cout << "Sample Times: ";
+            for (auto const& item:vec_values)
+                std::cout << item.first << " ";
+            std::cout << std::endl;
+            for (auto const& item:vec_values) {
+                std::cout << "time: " << item.first << "ns :: ";
+                for (auto const& val:item.second)
+                    std::cout << val.first << " : "
+                    << val.second << ", ";
+                std::cout << std::endl;
+            }
+        }
+        
+        void sigtiming::get_value(int t, char value, bool& is_valid, char& out) {
+            if (std::binary_search(sampletimes.begin(), sampletimes.end(), t))
+            {
+                if ( vec_values[t].find(value) == vec_values[t].end() ) {
+                    // not found
+                    is_valid = false;
+                } else {
+                    // found
+                    is_valid = true;
+                    out = vec_values[t][value];
+                    //std:: cout << vec_values[t][value];
+                }
+                
+            }
+            else {
+                is_valid = false;
+            }
+        }
+        
         bool compiler::find_signal(std::string const &x){
             auto e = signals.find(x);
             if (e == signals.end()) return  false;
@@ -82,25 +145,47 @@ namespace client {
             
         }
         
+        void compiler::add_sigtiming(std::string const& name, std::list<ast::time_event> const& events, std::string const& values)
+        {
+            if ( wavetables[cur_wft].sigtimings.find(name) == wavetables[cur_wft].sigtimings.end() ) {
+                // not found
+                wavetables[cur_wft].sigtimings[name] = sigtiming(events, values);
+            } else {
+                // found
+                wavetables[cur_wft].sigtimings[name].add_events(events, values);
+            }
+        }
+        
         bool compiler::operator()(const ast::wavetable &x)
         {
             cur_wft = x.name;
             wavetables[x.name] = wavetable();
             wavetables[x.name].period = x.period;
             
-//            std::cout << "Wavetable : " << x.name << std::endl;
+            std::cout << "Wavetable : " << x.name << std::endl;
             
             for (auto const& s:x.sig_events) {
-               
-               if (find_group(s.name))
-               {
-                   for (auto const& sig:groups[s.name]) {
-                       wavetables[x.name].sigtimings[sig] = sigtiming(s.events, s.values);
-                       std::cout << "Signal : " << sig << std::endl;
-//                       wavetables[x.name].sigtimings[sig].print();
-                   }
-               }
-                   else  wavetables[x.name].sigtimings[s.name] = sigtiming(s);
+                
+                if (find_group(s.name))
+                {
+                    for (auto const& sig:groups[s.name]) {
+                        
+                        add_sigtiming(sig, s.events, s.values);
+                        //wavetables[x.name].sigtimings[sig] = sigtiming(s.events, s.values);
+                        std::cout << "Signal : " << sig << std::endl;
+                        wavetables[x.name].sigtimings[sig].print();
+                    }
+                }
+                else   {
+                    std::cout << "Adding "
+                    << s.name << " to table : " << x.name
+                    << std::endl;
+                    
+                    add_sigtiming(s.name, s.events, s.values);
+                    
+                    //wavetables[x.name].sigtimings[s.name] = sigtiming(s);
+                    wavetables[x.name].sigtimings[s.name].print();
+                }
                 if (!(*this)(s)) return  false;
             }
             std::sort(sampletimes.begin(),
@@ -163,7 +248,7 @@ namespace client {
                 << std::endl;
                 std::cout << "\t Signals : ";
                 //for (auto sig: t.second.sig_events)
-                  //  std::cout << sig.name <<  " " ;
+                //  std::cout << sig.name <<  " " ;
                 std::cout << "\n===================\n";
                 
             }
@@ -205,6 +290,8 @@ namespace client {
         
         bool compiler::operator()(const ast::vec_data &x) {
             std::cout << "Executing vec data \n";
+            bool valid = false;
+            char out;
             
             if (find_group(x.name))
             {
@@ -216,14 +303,16 @@ namespace client {
                     {
                         
                         auto sig = groups[x.name][i];
-                        auto val_pair = wavetables[cur_wft].sigtimings[sig].get_value(t, x.value.at(i));
-//                        std::cout << "Result of "
-//                        << sig << " : "
-//                        << val_pair.first << " "
-//                        << val_pair.second
-//                        << std::endl;
-                        if (val_pair.first)
-                            cur_vec[sig] = val_pair.second;
+                        wavetables[cur_wft].sigtimings[sig].get_value(t, x.value.at(i), valid, out);
+                        std::cout << "Result of "
+                        << sig << " : " << t << "ns "
+                        << valid << " "
+                        << out
+                        << std::endl;
+                        if (valid) {
+                            cur_vec[sig] = out;
+                            vec_changed = true;
+                        }
                         
                     }
                     write_vec(t);
@@ -234,10 +323,13 @@ namespace client {
         }
         
         void compiler::write_vec(int t) {
-            fout << t << " ";
-            for (auto const& elem:cur_vec)
-                fout << elem.second;
-            fout << std::endl;
+            if (vec_changed) {
+                fout << t << " ";
+                for (auto const& elem:cur_vec)
+                    fout << elem.second;
+                fout << std::endl;
+                vec_changed = false;
+            }
         }
         
         void compiler::write_header() {
