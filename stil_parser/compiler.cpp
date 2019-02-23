@@ -2,7 +2,9 @@
 #include "ast.hpp"
 #include <algorithm>
 #include <vector>
-
+#include <string>
+#include <ctype.h>
+#include <set>
 namespace client {
     namespace vecgen {
         
@@ -88,7 +90,7 @@ namespace client {
         void compiler::add_signal(ast::signal const &x)
         {
             signals[x.name] = x.type;
-            cur_vec[x.name] = 'X';
+            work_vec[x.name] = 'X';
         }
         bool compiler::operator()(ast::signal const &x) {
             if (find_signal(x.name)) {
@@ -273,6 +275,7 @@ namespace client {
         bool compiler::operator()(const ast::vec_stmt &x) {
             for (auto const& s:x)
                 if (!(*this)(s)) return  false;
+            write_vec();
             return true;
         }
         
@@ -288,60 +291,80 @@ namespace client {
             return true;
         }
         
-        bool compiler::operator()(const ast::vec_data &x) {
-            std::cout << "Executing vec data \n";
+        void compiler::vec_proc(std::string const& sig, char val)
+        {
             bool valid = false;
             char out;
+            pre_vec[sig] = val;
+            for (auto const& t : wavetable_sampletimes[cur_wft])
+            {
+                wavetables[cur_wft].sigtimings[sig].get_value(t, val, valid, out);
+                if (valid)
+                {
+                    sampletimes.push_back(t);
+                    cur_vec[t][sig] = val;
+                }
+            }
+        }
+        
+        bool compiler::operator()(const ast::vec_data &x) {
             
             if (find_group(x.name))
             {
-                std::cout << "found group: "
-                << x.name << std::endl;
-                for (auto const& t : wavetable_sampletimes[cur_wft])
+                for(int i = 0; i < groups[x.name].size(); ++i)
                 {
-                    for(int i = 0; i < groups[x.name].size(); ++i)
-                    {
-                        
-                        auto sig = groups[x.name][i];
-                        wavetables[cur_wft].sigtimings[sig].get_value(t, x.value.at(i), valid, out);
-                        std::cout << "Result of "
-                        << sig << " : " << t << "ns "
-                        << valid << " "
-                        << out
-                        << std::endl;
-                        if (valid) {
-                            cur_vec[sig] = out;
-                            vec_changed = true;
-                        }
-                        
-                    }
-                    write_vec(t);
+                    auto sig = groups[x.name][i];
+                    vec_proc(sig, x.value.at(i));
                 }
-            }
-            
+            } else vec_proc(x.name, x.value.at(0));
+            //write_vec(t);
             return true;
         }
         
-        void compiler::write_vec(int t) {
-            if (vec_changed) {
+        void compiler::write_vec() {
+            //std::sort(sampletimes.begin(),
+              //        sampletimes.end());
+            std::set<int> s( sampletimes.begin(), sampletimes.end() );
+            sampletimes.assign( s.begin(), s.end() );
+            for (auto const& t:sampletimes) {
                 fout << t << " ";
-                for (auto const& elem:cur_vec)
-                    fout << elem.second;
+                for (auto const& elem:work_vec) {
+                    auto const& val = cur_vec[t][elem.first];
+                    if (val) {
+                        fout << val;
+                        work_vec[elem.first] = val;
+                    } else fout << work_vec[elem.first];
+                    
+                }
                 fout << std::endl;
-                vec_changed = false;
             }
+            
         }
         
         void compiler::write_header() {
-            for (auto const& elem:cur_vec)
+            for (auto const& elem:work_vec)
                 fout << elem.first << " ";
             fout << std::endl;
         }
         
+        bool compiler::operator()(const ast::procs &x) { 
+            return true;
+        }
         
+        bool compiler::operator()(const ast::macros &x) { 
+            return true;
+        }
         
+        bool compiler::operator()(const ast::macro_call &x) {
+            return true;
+        }
+        bool compiler::operator()(const ast::proc_call &x) {
+            return true;
+        }
         
-        
+        bool compiler::operator()(const ast::cond_stmt &x) { 
+            return true;
+        }
         
         
         

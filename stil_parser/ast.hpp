@@ -97,34 +97,6 @@ namespace client {
             std::string name;
             int period;
             std::list<sig_tim_event> sig_events;
-            
-            /*
-            std::pair<bool,std::string> getvalue(std::string sig, int time, char value)
-            {
-                std::cout << "Searching : "
-                << sig << " "
-                << time << " "
-                << value
-                << std::endl;
-                for (auto const& e:sig_events)
-                {
-                    std::cout << e.name << std::endl;
-                    
-                    if (e.name == sig)
-                    {
-                        for (auto& l:e.events)
-                            if (time == l.first) {
-                                std::size_t found = e.values.find(value);
-                                if (e.values.size() == l.second.size())
-                                    return std::make_pair(true, l.second.substr(found,1));
-                                else return std::make_pair(true, l.second);
-                            }
-                        
-                    }
-                }
-                return std::make_pair(false, "no");
-            }
-             */
         };
         
         struct timing {
@@ -138,7 +110,7 @@ namespace client {
         };
         
         struct patexec {
-            std::string timingblock;
+            boost::optional<std::string> timingblock;
             std::string burst;
         };
         
@@ -149,15 +121,45 @@ namespace client {
             std::string value;
         };
         typedef std::vector<vec_data> vec_stmt;
+        struct cond_stmt {
+            std::vector<vec_data> stmts;
+        };
         typedef std::string cur_wft;
+        struct pat_list;
+        struct macro_proc_def;
+        struct macro_call;
+        struct proc_call;
         struct pat_stmt : x3::variant <
         vec_stmt,
-        cur_wft
+        cur_wft,
+        cond_stmt,
+        boost::recursive_wrapper<macro_call>,
+        boost::recursive_wrapper<proc_call>
+        //boost::recursive_wrapper<pat_list>
         >
         {
             using base_type::base_type;
             using base_type::operator=;
         };
+        struct pat_list : std::list<pat_stmt> {};
+        //struct cond_stmt : vec_stmt {};
+        struct macro_proc_def {
+            std::string name;
+            pat_list stmts;
+        };
+        struct macro_call {
+            std::string name;
+            pat_list stmts;
+        };
+        struct proc_call {
+            std::string name;
+            pat_list stmts;
+        };
+        //struct macro_call : macro_proc_def {};
+        //struct proc_call : macro_call {};
+        struct macros : std::list<macro_proc_def> {};
+        struct procs : macros {};
+
         struct pattern {
             std::string name;
             std::vector<pat_stmt> pats;
@@ -169,6 +171,8 @@ namespace client {
         signals,
         groups,
         timing,
+        macros,
+        procs,
         patexec,
         patburst,
         pattern

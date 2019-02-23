@@ -38,6 +38,11 @@ namespace client {
             ("PatternExec")
             ("Pattern")
             ("Vector")
+            ("Condition")
+            ("MacroDefs")
+            ("Procedurs")
+            ("Call")
+            ("Proc")
             ("In")
             ("Out")
             ("InOut")
@@ -95,10 +100,22 @@ namespace client {
         x3::rule<class patburst_class, ast::patburst> const patburst = "patburst";
         x3::rule<class patexec_class, ast::patexec> const patexec = "patexec";
         
+        
+        
+        //Macro Def & Procedures
+        x3::rule<class macros_class, ast::macros> const macros = "macrodefs";
+        x3::rule<class procs_class, ast::procs> const procs = "procs";
+        x3::rule<class macro_class, ast::macro_proc_def> const macro = "macro";
+        x3::rule<class proc_class, ast::macro_proc_def> const proc = "proc";
+        
+        x3::rule<class macro_call_class, ast::macro_call> const macro_call = "macro_call";
+        x3::rule<class proc_call_class, ast::proc_call> const proc_call = "proc_call";
+        
         //Pattern
         x3::rule<class pattern_class, ast::pattern> const pattern = "pattern";
         x3::rule<class vec_data_class, ast::vec_data> const vec_data = "vec_data";
         x3::rule<class vec_stmt_class, ast::vec_stmt> const vec_stmt = "vec_stmt";
+        x3::rule<class cond_stmt_class, ast::cond_stmt> const cond_stmt = "cond_stmt";
         x3::rule<class pat_stmt_class, ast::pat_stmt> const pat_stmt = "pat_stmt";
         
         //session
@@ -128,7 +145,7 @@ namespace client {
         >> -(lit(";"))
         ;
         
-       
+        
         
         
         auto const signals_def = lit("Signals")
@@ -190,6 +207,8 @@ namespace client {
         >> "}"
         ;
         
+        
+        
         //Pattern Burst/Exec
         auto patburst_def = lit("PatternBurst")
         >> identifier
@@ -200,7 +219,7 @@ namespace client {
         
         auto patexec_def = lit("PatternExec")
         > "{"
-        > "Timing" > identifier > ";"
+        > -("Timing" > identifier > ";")
         > "PatternBurst" > identifier > ";"
         > "}"
         ;
@@ -216,9 +235,18 @@ namespace client {
         > +(vec_data)
         > "}"
         ;
+        auto const cond_stmt_def =
+        (lit("C") | lit("Condition"))
+        > "{"
+        > +(vec_data)
+        > "}"
+        ;
         auto const pat_stmt_def =
         vec_stmt
         | "W" > identifier > ";"
+        | cond_stmt
+        | macro_call
+        | proc_call
         ;
         auto const pattern_def = lit("Pattern")
         > identifier
@@ -227,12 +255,50 @@ namespace client {
         > "}"
         ;
         
+        //Macros & Procs
+        auto macro_def = identifier
+        > "{"
+        >> *(pat_stmt)
+        >> "}"
+        ;
+        
+        auto proc_def = identifier
+        > "{"
+        >> *(pat_stmt)
+        >> "}"
+        ;
+        
+        auto macro_call_def = lit("Macro")
+        > identifier
+        >> -("{" >> *(pat_stmt) >> "}")
+        | ';'
+        ;
+        
+        auto proc_call_def = lit("Call")
+        > identifier
+        >> -("{" >> *(pat_stmt) >> "}")
+        | ';'
+        ;
+        
+        auto macros_def = lit("MacroDefs")
+        > "{"
+        >> *(macro)
+        >> "}"
+        ;
+        
+        auto procs_def = lit("Procedures")
+        > "{"
+        >> *(proc)
+        > "}"
+        ;
         
         auto const block_def =
         //x3::eps
         signals
         | groups
         | timing
+        | macros
+        | procs
         | patburst
         | patexec
         | pattern
@@ -261,7 +327,14 @@ namespace client {
                             pattern,
                             vec_data,
                             vec_stmt,
+                            cond_stmt,
                             pat_stmt,
+                            macro,
+                            proc,
+                            macros,
+                            procs,
+                            macro_call,
+                            proc_call,
                             block,
                             session,
                             stil_session

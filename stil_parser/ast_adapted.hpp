@@ -24,4 +24,8 @@ BOOST_FUSION_ADAPT_STRUCT(client::ast::patburst, name, patlist)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::patexec, timingblock, burst)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::vec_data, name, value)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::pattern, name, pats)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::macro_proc_def, name, stmts)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::macro_call, name, stmts)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::proc_call, name, stmts)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::cond_stmt, stmts)
 #endif // AST_ADAPTED_HPP

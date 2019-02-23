@@ -65,6 +65,12 @@ namespace client {
             bool operator()(ast::cur_wft const& x);
             bool operator()(ast::vec_stmt const& x);
             bool operator()(ast::vec_data const& x);
+            bool operator()(ast::procs const& x);
+            bool operator()(ast::macros const& x);
+            bool operator()(ast::macro_call const& x);
+            bool operator()(ast::proc_call const& x);
+            bool operator()(ast::cond_stmt const& x);
+            
             
             bool start(ast::session const& x) ;
             void print_signals() const;
@@ -81,8 +87,9 @@ namespace client {
             std::map<std::string, wavetable > wavetables;
             std::map<std::string, std::vector<int> > wavetable_sampletimes;
             std::vector<int> sampletimes;
-            std::string cur_wft;
-            std::map<std::string, char> cur_vec;
+            std::string cur_wft, pre_wft;
+            std::map<int, std::map<std::string, char> > cur_vec;
+            std::map<std::string, char> pre_vec, work_vec;
             error_handler_type error_handler;
             
             void add_signal(ast::signal const& x) ;
@@ -92,7 +99,8 @@ namespace client {
             void add_sigtiming(std::string const& name, std::list<ast::time_event> const& events, std::string const& values);
             
             void write_header();
-            void write_vec(int t);
+            void vec_proc(std::string const& sig, char val);
+            void write_vec();
             
         };
     }
