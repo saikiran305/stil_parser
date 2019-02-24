@@ -162,10 +162,10 @@ PatternBurst "scan_burst";
 MacroDefs {
 "scan" {
 W two;
-//C { MASTER=P; SLAVE=P; SI1=0; SI2=0; SO1=X; SO2=X; }
-//Shift { V { SI1=#; SI2=#; SO1=#; SO2=#; } }
-//W one;
-//C { MASTER=0; SLAVE=0;}
+C { MASTER=P; SLAVE=P; SI1=0; SI2=0; SO1=X; SO2=X; }
+Shift { V { SI1=#; SI2=#; SO1=#; SO2=#; } }
+W one;
+C { MASTER=0; SLAVE=0;}
 }
 } // end MacroDefs
 
@@ -173,7 +173,7 @@ Procedures {
 "scan" {
 W two;
 V { ALL=0011ZZZZZZXXXXXXXX; } // define all signals
-//Shift { V { MASTER=P; SLAVE=P; SI1=#;SI2=#;SO1=#;SO2=#;}}
+Shift { V { MASTER=P; SLAVE=P; SI1=#;SI2=#;SO1=#;SO2=#;}}
 }
 } // end procedures
 
@@ -182,12 +182,15 @@ W one;
 V { ALL=00ZZZZZZZZXXXXXXXX; } // define all signals
 
 
-//Macro "scan" {
-//SI1=000000000000000000000000000000;
-//SI2=1111111111111111111111111111111111; }
+Macro "scan" {
+SI1=000000000000000000000000000000;
+SI2=1111111111111111111111111111111111; }
+
 V { MASTER=1; OE_=1; B0=H; }
-//Call "scan" {
-//SO1=LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL;
-//SO2=HHHHHHHHHHHHHHHHHHHHHHHHHHHHHH; }
+
+
+Call "scan" {
+SO1=LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL;
+SO2=HHHHHHHHHHHHHHHHHHHHHHHHHHHHHH; }
 
 } //end Pattern scan

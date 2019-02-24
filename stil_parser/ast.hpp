@@ -124,6 +124,9 @@ namespace client {
         struct cond_stmt {
             std::vector<vec_data> stmts;
         };
+        struct shift_stmt {
+            std::vector<vec_data> stmts;
+        };
         typedef std::string cur_wft;
         struct pat_list;
         struct macro_proc_def;
@@ -133,6 +136,7 @@ namespace client {
         vec_stmt,
         cur_wft,
         cond_stmt,
+        shift_stmt,
         boost::recursive_wrapper<macro_call>,
         boost::recursive_wrapper<proc_call>
         //boost::recursive_wrapper<pat_list>
@@ -149,11 +153,11 @@ namespace client {
         };
         struct macro_call {
             std::string name;
-            pat_list stmts;
+            std::list<vec_data> stmts;
         };
         struct proc_call {
             std::string name;
-            pat_list stmts;
+            std::list<vec_data> stmts;
         };
         //struct macro_call : macro_proc_def {};
         //struct proc_call : macro_call {};

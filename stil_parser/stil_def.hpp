@@ -40,9 +40,10 @@ namespace client {
             ("Vector")
             ("Condition")
             ("MacroDefs")
-            ("Procedurs")
+            ("Procedures")
+            ("Macro")
             ("Call")
-            ("Proc")
+            ("Shift")
             ("In")
             ("Out")
             ("InOut")
@@ -116,6 +117,7 @@ namespace client {
         x3::rule<class vec_data_class, ast::vec_data> const vec_data = "vec_data";
         x3::rule<class vec_stmt_class, ast::vec_stmt> const vec_stmt = "vec_stmt";
         x3::rule<class cond_stmt_class, ast::cond_stmt> const cond_stmt = "cond_stmt";
+        x3::rule<class shift_stmt_class, ast::shift_stmt> const shift_stmt = "shift_stmt";
         x3::rule<class pat_stmt_class, ast::pat_stmt> const pat_stmt = "pat_stmt";
         
         //session
@@ -173,7 +175,8 @@ namespace client {
         int_ >> lit("ns")
         //>> quote
         ;
-        auto const wfc_def = x3::alnum;
+        auto const wfc_def = x3::alnum
+        | char_('#');
         /*
          | x3::digit
          | char_('#')
@@ -236,17 +239,27 @@ namespace client {
         > "}"
         ;
         auto const cond_stmt_def =
-        (lit("C") | lit("Condition"))
+        ((lit("C") | lit("Condition")) - lit("Call"))
         > "{"
         > +(vec_data)
+        > "}"
+        ;
+        auto const shift_stmt_def =
+        lit("Shift")
+        > "{"
+        > "V" > "{"
+        > +(vec_data)
+        > "}"
         > "}"
         ;
         auto const pat_stmt_def =
         vec_stmt
         | "W" > identifier > ";"
-        | cond_stmt
+
+        | shift_stmt
         | macro_call
         | proc_call
+        | cond_stmt
         ;
         auto const pattern_def = lit("Pattern")
         > identifier
@@ -270,13 +283,13 @@ namespace client {
         
         auto macro_call_def = lit("Macro")
         > identifier
-        >> -("{" >> *(pat_stmt) >> "}")
+        >> -("{" >> *(vec_data) >> "}")
         | ';'
         ;
         
         auto proc_call_def = lit("Call")
         > identifier
-        >> -("{" >> *(pat_stmt) >> "}")
+        >> -("{" >> *(vec_data) >> "}")
         | ';'
         ;
         
@@ -328,6 +341,7 @@ namespace client {
                             vec_data,
                             vec_stmt,
                             cond_stmt,
+                            shift_stmt,
                             pat_stmt,
                             macro,
                             proc,

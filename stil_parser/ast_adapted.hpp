@@ -28,4 +28,5 @@ BOOST_FUSION_ADAPT_STRUCT(client::ast::macro_proc_def, name, stmts)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::macro_call, name, stmts)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::proc_call, name, stmts)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::cond_stmt, stmts)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::shift_stmt, stmts)
 #endif // AST_ADAPTED_HPP

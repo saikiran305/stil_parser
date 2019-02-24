@@ -70,6 +70,7 @@ namespace client {
             bool operator()(ast::macro_call const& x);
             bool operator()(ast::proc_call const& x);
             bool operator()(ast::cond_stmt const& x);
+            bool operator()(ast::shift_stmt const& x);
             
             
             bool start(ast::session const& x) ;
@@ -87,6 +88,10 @@ namespace client {
             std::map<std::string, wavetable > wavetables;
             std::map<std::string, std::vector<int> > wavetable_sampletimes;
             std::vector<int> sampletimes;
+            std::map<std::string, ast::macro_proc_def> macros, procs;
+            std::string cur_macro, cur_proc;
+            int macro_proc, macro_proc_max_len;
+            std::list<ast::vec_data> cur_args;
             std::string cur_wft, pre_wft;
             std::map<int, std::map<std::string, char> > cur_vec;
             std::map<std::string, char> pre_vec, work_vec;
@@ -101,6 +106,8 @@ namespace client {
             void write_header();
             void vec_proc(std::string const& sig, char val);
             void write_vec();
+            int find_max_len(std::list<ast::vec_data> const& stmts);
+            void vec_proc_wrap(std::string const& sig,char const& val);
             
         };
     }

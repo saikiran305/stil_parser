@@ -20,14 +20,16 @@ namespace client {
                 }
                 
             }
+            std::set<int> s( sampletimes.begin(), sampletimes.end() );
+            sampletimes.assign( s.begin(), s.end() );
         }
         
         sigtiming::sigtiming(ast::sig_tim_event const& x)
         {
             std::cout << "Construct with sig_tim_event \n";
             add_events(x.events, x.values);
-            std::sort(sampletimes.begin(),
-                      sampletimes.end());
+            //std::sort(sampletimes.begin(),
+              //        sampletimes.end());
         }
         
         sigtiming::sigtiming(std::list<ast::time_event> const& events, std::string const& values)
@@ -52,8 +54,15 @@ namespace client {
         }
         
         void sigtiming::get_value(int t, char value, bool& is_valid, char& out) {
+            //std::cout << "SampleTimes: ";
+            //for (auto const& t:sampletimes) std::cout << t << " ";
+            //std::cout << std::endl;
             if (std::binary_search(sampletimes.begin(), sampletimes.end(), t))
             {
+//                std::cout << "Search : "
+//                << "t : " << t << " "
+//                << "value : " << value <<
+//                std:: endl;
                 if ( vec_values[t].find(value) == vec_values[t].end() ) {
                     // not found
                     is_valid = false;
@@ -175,18 +184,18 @@ namespace client {
                         add_sigtiming(sig, s.events, s.values);
                         //wavetables[x.name].sigtimings[sig] = sigtiming(s.events, s.values);
                         std::cout << "Signal : " << sig << std::endl;
-                        wavetables[x.name].sigtimings[sig].print();
+                        //wavetables[x.name].sigtimings[sig].print();
                     }
                 }
                 else   {
-                    std::cout << "Adding "
-                    << s.name << " to table : " << x.name
-                    << std::endl;
-                    
+//                    std::cout << "Adding "
+//                    << s.name << " to table : " << x.name
+//                    << std::endl;
+//
                     add_sigtiming(s.name, s.events, s.values);
                     
                     //wavetables[x.name].sigtimings[s.name] = sigtiming(s);
-                    wavetables[x.name].sigtimings[s.name].print();
+                    //wavetables[x.name].sigtimings[s.name].print();
                 }
                 if (!(*this)(s)) return  false;
             }
@@ -248,9 +257,11 @@ namespace client {
                 << std::endl ;
                 std::cout << "\t Period : " << t.second.period
                 << std::endl;
-                std::cout << "\t Signals : ";
-                //for (auto sig: t.second.sig_events)
-                //  std::cout << sig.name <<  " " ;
+//                std::cout << "\t Signals : ";
+//                for (auto sig: t.second.sigtimings) {
+//                    std::cout << sig.first <<  " " ;
+//                    sig.second.print();
+//                }
                 std::cout << "\n===================\n";
                 
             }
@@ -282,6 +293,7 @@ namespace client {
         
         bool compiler::operator()(const ast::cur_wft &x) {
             cur_wft = x;
+            sampletimes.clear();
             return true;
         }
         
@@ -299,11 +311,19 @@ namespace client {
             for (auto const& t : wavetable_sampletimes[cur_wft])
             {
                 wavetables[cur_wft].sigtimings[sig].get_value(t, val, valid, out);
+
+
                 if (valid)
                 {
+//                    std::cout <<
+//                    "Sig : " << sig << " "
+//                    "t : " << t << " "
+//                    "val : " << val << " "
+//                    "out : " << out << std::endl;
                     sampletimes.push_back(t);
-                    cur_vec[t][sig] = val;
-                }
+                    cur_vec[t][sig] = out;
+
+                } else cur_vec[t].erase(sig);
             }
         }
         
@@ -311,6 +331,8 @@ namespace client {
             
             if (find_group(x.name))
             {
+                //std:: cout <<
+                //"Group : " << x.name << std::endl;
                 for(int i = 0; i < groups[x.name].size(); ++i)
                 {
                     auto sig = groups[x.name][i];
@@ -347,26 +369,87 @@ namespace client {
             fout << std::endl;
         }
         
-        bool compiler::operator()(const ast::procs &x) { 
+        bool compiler::operator()(const ast::procs &x) {
+            for (auto const& proc:x) {
+                procs[proc.name] = proc;
+            }
             return true;
         }
         
-        bool compiler::operator()(const ast::macros &x) { 
+        bool compiler::operator()(const ast::macros &x) {
+            for (auto const& macro:x) {
+                macros[macro.name] = macro;
+            }
             return true;
         }
         
         bool compiler::operator()(const ast::macro_call &x) {
+           
+            cur_macro = x.name;
+            macro_proc = 1;
+            macro_proc_max_len = find_max_len(x.stmts);
+            std::cout << "Macro call : Len : " << macro_proc_max_len << std::endl;
+            cur_args = x.stmts;
+            for (auto const& s:macros[x.name].stmts)
+                if (!(boost::apply_visitor(*this,s))) return  false;
             return true;
         }
         bool compiler::operator()(const ast::proc_call &x) {
+            cur_proc = x.name;
+            macro_proc = 0;
+            macro_proc_max_len = find_max_len(x.stmts);
+            std::cout << "Proc call : Len : " << macro_proc_max_len << std::endl;
+            cur_args = x.stmts;
+            for (auto const& s:macros[x.name].stmts)
+                if (!(boost::apply_visitor(*this,s))) return  false;
+            return true;
             return true;
         }
         
-        bool compiler::operator()(const ast::cond_stmt &x) { 
+        bool compiler::operator()(const ast::cond_stmt &x) {
+            for (auto const& s:x.stmts)
+                if (!(*this)(s)) return  false;
+            return true;
+        }
+        void compiler::vec_proc_wrap(std::string const& sig, char const& val) {
+            
+            if (find_group(sig))
+            {
+                //for(int i = 0; i < groups[sig].size(); ++i)
+                //{
+                    auto s = groups[sig][0];
+                //std::cout << "s : " << s << " val : " << val << std::endl;
+                    vec_proc(s, val);
+                //}
+            } else vec_proc(sig, val);
+            //write_vec(t);
+        }
+        
+        bool compiler::operator()(const ast::shift_stmt &x)
+        {
+            std::cout << "Shift stmt \n";
+            // Process non params first
+            for (auto const& elem:x.stmts)
+                if (elem.value != "#") vec_proc(elem.name, elem.value.at(0));
+            for(int i = 0 ; i < macro_proc_max_len; ++i)
+            {
+                for (auto const& elem:cur_args) {
+                    if (i < elem.value.length()) {
+                        vec_proc_wrap(elem.name, elem.value.at(i));
+                    }
+                }
+                write_vec();
+            }
+
             return true;
         }
         
-        
+        int compiler::find_max_len(std::list<ast::vec_data> const& stmts)
+        {
+            std::vector<int> lengths;
+            for (auto const& vec:stmts) lengths.push_back(vec.value.length());
+            return *std::max_element(lengths.begin(), lengths.end());;
+        }
         
         
     }
