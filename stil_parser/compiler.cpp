@@ -24,13 +24,13 @@ namespace client {
             sampletimes.assign( s.begin(), s.end() );
         }
         
-        sigtiming::sigtiming(ast::sig_tim_event const& x)
-        {
-            std::cout << "Construct with sig_tim_event \n";
-            add_events(x.events, x.values);
-            //std::sort(sampletimes.begin(),
-              //        sampletimes.end());
-        }
+//        sigtiming::sigtiming(ast::sig_tim_event const& x)
+//        {
+//            std::cout << "Construct with sig_tim_event \n";
+//            add_events(x.events, x.values);
+//            //std::sort(sampletimes.begin(),
+//            //        sampletimes.end());
+//        }
         
         sigtiming::sigtiming(std::list<ast::time_event> const& events, std::string const& values)
         {
@@ -59,10 +59,10 @@ namespace client {
             //std::cout << std::endl;
             if (std::binary_search(sampletimes.begin(), sampletimes.end(), t))
             {
-//                std::cout << "Search : "
-//                << "t : " << t << " "
-//                << "value : " << value <<
-//                std:: endl;
+                //                std::cout << "Search : "
+                //                << "t : " << t << " "
+                //                << "value : " << value <<
+                //                std:: endl;
                 if ( vec_values[t].find(value) == vec_values[t].end() ) {
                     // not found
                     is_valid = false;
@@ -175,29 +175,31 @@ namespace client {
             
             std::cout << "Wavetable : " << x.name << std::endl;
             
-            for (auto const& s:x.sig_events) {
-                
-                if (find_group(s.name))
-                {
-                    for (auto const& sig:groups[s.name]) {
-                        
-                        add_sigtiming(sig, s.events, s.values);
-                        //wavetables[x.name].sigtimings[sig] = sigtiming(s.events, s.values);
-                        std::cout << "Signal : " << sig << std::endl;
-                        //wavetables[x.name].sigtimings[sig].print();
-                    }
-                }
-                else   {
-//                    std::cout << "Adding "
-//                    << s.name << " to table : " << x.name
-//                    << std::endl;
-//
-                    add_sigtiming(s.name, s.events, s.values);
+            for (auto const& elem:x.sig_events) {
+                for (auto const& s:elem.sig_event_list) {
                     
-                    //wavetables[x.name].sigtimings[s.name] = sigtiming(s);
-                    //wavetables[x.name].sigtimings[s.name].print();
+                    if (find_group(elem.name))
+                    {
+                        for (auto const& sig:groups[elem.name]) {
+                            
+                            add_sigtiming(sig, s.events, s.values);
+                            //wavetables[x.name].sigtimings[sig] = sigtiming(s.events, s.values);
+                            std::cout << "Signal : " << sig << std::endl;
+                            //wavetables[x.name].sigtimings[sig].print();
+                        }
+                    }
+                    else   {
+                        //                    std::cout << "Adding "
+                        //                    << s.name << " to table : " << x.name
+                        //                    << std::endl;
+                        //
+                        add_sigtiming(elem.name, s.events, s.values);
+                        
+                        //wavetables[x.name].sigtimings[s.name] = sigtiming(s);
+                        //wavetables[x.name].sigtimings[s.name].print();
+                    }
+                    if (!(*this)(s)) return  false;
                 }
-                if (!(*this)(s)) return  false;
             }
             std::sort(sampletimes.begin(),
                       sampletimes.end());
@@ -257,11 +259,11 @@ namespace client {
                 << std::endl ;
                 std::cout << "\t Period : " << t.second.period
                 << std::endl;
-//                std::cout << "\t Signals : ";
-//                for (auto sig: t.second.sigtimings) {
-//                    std::cout << sig.first <<  " " ;
-//                    sig.second.print();
-//                }
+                //                std::cout << "\t Signals : ";
+                //                for (auto sig: t.second.sigtimings) {
+                //                    std::cout << sig.first <<  " " ;
+                //                    sig.second.print();
+                //                }
                 std::cout << "\n===================\n";
                 
             }
@@ -282,10 +284,14 @@ namespace client {
             write_header();
             return true;
         }
-        
+        bool compiler::operator()(const ast::annotation &x) {
+            write_comment(x);
+            return true;
+        }
         bool compiler::operator()(const ast::vec_stmt &x) {
-            for (auto const& s:x)
+            for (auto const& s:x.stmts)
                 if (!(*this)(s)) return  false;
+            write_comment("Vector");
             write_vec();
             return true;
         }
@@ -311,18 +317,18 @@ namespace client {
             for (auto const& t : wavetable_sampletimes[cur_wft])
             {
                 wavetables[cur_wft].sigtimings[sig].get_value(t, val, valid, out);
-
-
+                
+                
                 if (valid)
                 {
-//                    std::cout <<
-//                    "Sig : " << sig << " "
-//                    "t : " << t << " "
-//                    "val : " << val << " "
-//                    "out : " << out << std::endl;
+                    //                    std::cout <<
+                    //                    "Sig : " << sig << " "
+                    //                    "t : " << t << " "
+                    //                    "val : " << val << " "
+                    //                    "out : " << out << std::endl;
                     sampletimes.push_back(t);
                     cur_vec[t][sig] = out;
-
+                    
                 } else cur_vec[t].erase(sig);
             }
         }
@@ -342,10 +348,14 @@ namespace client {
             //write_vec(t);
             return true;
         }
-        
+        void compiler::write_comment(std::string const& msg)
+        {
+            
+            fout << "//" << msg  << std::endl;
+        }
         void compiler::write_vec() {
             //std::sort(sampletimes.begin(),
-              //        sampletimes.end());
+            //        sampletimes.end());
             std::set<int> s( sampletimes.begin(), sampletimes.end() );
             sampletimes.assign( s.begin(), s.end() );
             for (auto const& t:sampletimes) {
@@ -384,12 +394,13 @@ namespace client {
         }
         
         bool compiler::operator()(const ast::macro_call &x) {
-           
+            
             cur_macro = x.name;
             macro_proc = 1;
             macro_proc_max_len = find_max_len(x.stmts);
-            std::cout << "Macro call : Len : " << macro_proc_max_len << std::endl;
+            //std::cout << "Macro call : Len : " << macro_proc_max_len << std::endl;
             cur_args = x.stmts;
+            write_comment("Macro Call : " + cur_macro);
             for (auto const& s:macros[x.name].stmts)
                 if (!(boost::apply_visitor(*this,s))) return  false;
             return true;
@@ -398,8 +409,9 @@ namespace client {
             cur_proc = x.name;
             macro_proc = 0;
             macro_proc_max_len = find_max_len(x.stmts);
-            std::cout << "Proc call : Len : " << macro_proc_max_len << std::endl;
+            //std::cout << "Proc call : Len : " << macro_proc_max_len << std::endl;
             cur_args = x.stmts;
+            write_comment("Proc Call : " + cur_proc);
             for (auto const& s:macros[x.name].stmts)
                 if (!(boost::apply_visitor(*this,s))) return  false;
             return true;
@@ -417,9 +429,9 @@ namespace client {
             {
                 //for(int i = 0; i < groups[sig].size(); ++i)
                 //{
-                    auto s = groups[sig][0];
+                auto s = groups[sig][0];
                 //std::cout << "s : " << s << " val : " << val << std::endl;
-                    vec_proc(s, val);
+                vec_proc(s, val);
                 //}
             } else vec_proc(sig, val);
             //write_vec(t);
@@ -440,7 +452,7 @@ namespace client {
                 }
                 write_vec();
             }
-
+            
             return true;
         }
         
@@ -450,6 +462,7 @@ namespace client {
             for (auto const& vec:stmts) lengths.push_back(vec.value.length());
             return *std::max_element(lengths.begin(), lengths.end());;
         }
+        
         
         
     }

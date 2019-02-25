@@ -18,7 +18,7 @@ namespace client {
             std::vector<int> sampletimes;
             std::map<int, std::map<char, char> > vec_values;
             sigtiming() {}
-            sigtiming(ast::sig_tim_event const& x);
+//            sigtiming(ast::sig_tim_event const& x);
             sigtiming(std::list<ast::time_event> const& events, std::string const& values);
             void add_events(std::list<ast::time_event> const& events, std::string const& values);
             void print();
@@ -31,6 +31,7 @@ namespace client {
             std::map<std::string,sigtiming> sigtimings;
         };
         
+        
         class compiler
         {
         public:
@@ -38,6 +39,10 @@ namespace client {
             typedef  std::function<
             void(x3::position_tagged, std::string const &)>
             error_handler_type;
+            typedef  std::function<
+            void(x3::position_tagged)>
+            eh_type;
+            
             
             template<typename ErrorHandler>
             compiler(
@@ -50,7 +55,8 @@ namespace client {
             outfilename(outfilename)
             {}
             
-            bool operator()(ast::nil) const {BOOST_ASSERT(0); return false;}
+            //bool operator()(ast::nil) const {BOOST_ASSERT(0); return false;}
+            bool operator()(ast::nil) const {return true;}
             bool operator()(ast::signals const& x)  ;
             bool operator()(ast::signal const& x)  ;
             bool operator()(ast::groups const& x);
@@ -71,7 +77,8 @@ namespace client {
             bool operator()(ast::proc_call const& x);
             bool operator()(ast::cond_stmt const& x);
             bool operator()(ast::shift_stmt const& x);
-            
+            bool operator()(ast::annotation const& x);
+            bool operator()(ast::scanstruct const& x);
             
             bool start(ast::session const& x) ;
             void print_signals() const;
@@ -82,6 +89,7 @@ namespace client {
             std::string outfilename;
             std::ofstream fout;
             bool vec_changed;
+
             
             std::map<std::string, ast::signal_type> signals;
             std::map<std::string, std::vector<std::string>> groups;
@@ -106,6 +114,7 @@ namespace client {
             void write_header();
             void vec_proc(std::string const& sig, char val);
             void write_vec();
+            void write_comment(std::string const& msg);
             int find_max_len(std::list<ast::vec_data> const& stmts);
             void vec_proc_wrap(std::string const& sig,char const& val);
             

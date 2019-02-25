@@ -88,18 +88,22 @@ namespace client {
          };
          */
         struct sig_tim_event {
-            std::string name;
+            //std::string name;
             std::string values;
             std::list<time_event> events;
         };
-        
+        struct sig_tim_events {
+            std::string name;
+            std::vector<sig_tim_event> sig_event_list;
+        };
         struct wavetable {
             std::string name;
             int period;
-            std::list<sig_tim_event> sig_events;
+            std::list<sig_tim_events> sig_events;
         };
         
         struct timing {
+            boost::optional<std::string> name;
             std::list<wavetable>  wavetables;
         };
         
@@ -114,13 +118,17 @@ namespace client {
             std::string burst;
         };
         
+        struct annotation : std::string {};
+        struct scanstruct : std::string {};
         //Pattern
         struct vec_data
         {
             std::string name;
             std::string value;
         };
-        typedef std::vector<vec_data> vec_stmt;
+        struct vec_stmt : x3::position_tagged {
+        std::vector<vec_data> stmts;
+        };
         struct cond_stmt {
             std::vector<vec_data> stmts;
         };
@@ -137,6 +145,7 @@ namespace client {
         cur_wft,
         cond_stmt,
         shift_stmt,
+        annotation,
         boost::recursive_wrapper<macro_call>,
         boost::recursive_wrapper<proc_call>
         //boost::recursive_wrapper<pat_list>
@@ -175,6 +184,7 @@ namespace client {
         signals,
         groups,
         timing,
+        //scanstruct,
         macros,
         procs,
         patexec,

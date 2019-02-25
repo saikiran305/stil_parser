@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     using client::parser::error_handler_type;
     error_handler_type error_handler(iter, end, std::cerr);
     client::ast::stil_ast ast;
-    
+
     std::string outfilename = filename;
     boost::replace_all(outfilename, ".stil", "_parsed.stil");
     client::vecgen::compiler compiler(error_handler, outfilename);

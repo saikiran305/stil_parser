@@ -41,6 +41,7 @@ namespace client {
             ("Condition")
             ("MacroDefs")
             ("Procedures")
+            ("Ann")
             ("Macro")
             ("Call")
             ("Shift")
@@ -51,6 +52,19 @@ namespace client {
             ("Pseudo")
             ("ScanIn")
             ("ScanOut")
+            ("ScanStructures")
+            ("ScanChain")
+            ("ScanLength")
+            ("ScanOutLength")
+            ("ScanCells")
+            ("ScanMasterClock")
+            ("ScanSlaveClock")
+            ("ScanInversion")
+            ("Header")
+            ("Title")
+            ("Source")
+            ("History")
+            ("Date")
             ;
             
             signal_type.add
@@ -71,6 +85,7 @@ namespace client {
         struct stil_session_class;
         struct signal_item_class;
         struct group_item_class;
+        struct vec_stmt_class;
         
         x3::rule<class version_class, std::string> const version = "version";
         
@@ -94,14 +109,19 @@ namespace client {
         x3::rule<class wfc_class, char> const wfc = "wfc";
         x3::rule<class tim_event_class, ast::time_event>const tim_event = "tim_event";
         x3::rule<class sig_time_event_class , ast::sig_tim_event> const sig_time_event = "sig_time_event";
+        x3::rule<class sig_time_events_class , ast::sig_tim_events> const sig_time_events = "sig_time_events";
         x3::rule<class wavetable_class, ast::wavetable> const wavetable = "wavetable";
         x3::rule<class timing_class, ast::timing> const timing = "timing";
+        
+        //Scanstructures, header (ignored)
+        x3::rule<class scanstruct_class, x3::unused_type> const scanstruct = "scanstruct";
+        x3::rule<class header_class, x3::unused_type> const header = "header";
         
         //PatternExec, PatternBurst
         x3::rule<class patburst_class, ast::patburst> const patburst = "patburst";
         x3::rule<class patexec_class, ast::patexec> const patexec = "patexec";
         
-        
+        x3::rule<class annotation_class, ast::annotation> const annotation = "annotation";
         
         //Macro Def & Procedures
         x3::rule<class macros_class, ast::macros> const macros = "macrodefs";
@@ -115,7 +135,7 @@ namespace client {
         //Pattern
         x3::rule<class pattern_class, ast::pattern> const pattern = "pattern";
         x3::rule<class vec_data_class, ast::vec_data> const vec_data = "vec_data";
-        x3::rule<class vec_stmt_class, ast::vec_stmt> const vec_stmt = "vec_stmt";
+        x3::rule<vec_stmt_class, ast::vec_stmt> const vec_stmt = "vec_stmt";
         x3::rule<class cond_stmt_class, ast::cond_stmt> const cond_stmt = "cond_stmt";
         x3::rule<class shift_stmt_class, ast::shift_stmt> const shift_stmt = "shift_stmt";
         x3::rule<class pat_stmt_class, ast::pat_stmt> const pat_stmt = "pat_stmt";
@@ -156,7 +176,10 @@ namespace client {
         > "}";
         
         //Groups Grammar
-        auto const group_name_def = !keywords >> identifier;
+        auto const group_name_def =
+        !keywords >> identifier >> x3::char_("[") > +(x3::digit) > x3::char_("]") > -(x3::char_("_"))
+        | !keywords >> identifier;
+        //!keywords >> identifier;
         auto const group_item_def = group_name >>
         '='
         >>
@@ -185,12 +208,15 @@ namespace client {
         
         auto const tim_event_def = eu >> (char_ % '/') >> ";";
         auto const sig_time_event_def =
-        identifier
-        > "{"
-        >> +(wfc)
+        +(wfc)
         >> "{"
         >> +(tim_event_def)
         >> "}"
+        ;
+        auto const sig_time_events_def =
+        identifier
+        > "{"
+        >> +(sig_time_event)
         >> "}"
         ;
         auto const wavetable_def = lit("WaveformTable")
@@ -200,17 +226,51 @@ namespace client {
         >> eu > ";"
         >> lit("Waveforms")
         > "{"
-        >> +(sig_time_event)
+        >> +(sig_time_events)
         > "}"
         > "}"
         ;
         auto const timing_def = lit("Timing")
+        > -(identifier)
         > "{"
         >> *(wavetable)
         >> "}"
         ;
         
+        auto scanstruct_def = x3::omit[
+        lit("ScanStructures")
+        >> -(identifier)
+        >> "{"
+//        >> ( lit("ScanChain") >> identifier >> "{"
+//
+//                      >> *(
+//                           (lit("ScanLength") > x3::int_ > ";")
+//                           | (lit("ScanOutLength") > x3::int_ > ";")
+//                           | (lit("ScanCells") > *(x3::char_ - ";") > ";")
+//                           | (lit("ScanIn") > *(x3::char_ - ";") > ";")
+//                           | (lit("ScanOut") > *(x3::char_ - ";") > ";")
+//                           | (lit("ScanMasterClock") > *(x3::char_ - ";") > ";")
+//                           | (lit("ScanSlaveClock") > *(x3::char_ - ";") > ";")
+//                           | (lit("ScanInversion") > x3::int_ > ";")
+//                           )
+//                      )
+//                      >> "}"
+                                       >> *(char_ - (lit("}") >> lit("}")))
+        ]
+        >> "}" >> "}"
+        ;
         
+        auto header_def = x3::omit[
+                lit("Header") >> "{" >>
+                *(
+                  (lit("Title") > *(x3::char_ - ";") > ";")
+                  |(lit("Date") > *(x3::char_ - ";") > ";")
+                  |(lit("Source")> *(x3::char_ - ";") > ";")
+                  |(lit("History") >> "{" >> *(char_ - (lit("*}") >> lit("}")))
+                    >> (lit("*}") >> lit("}")))
+                 )
+                >> "}"
+        ];
         
         //Pattern Burst/Exec
         auto patburst_def = lit("PatternBurst")
@@ -230,7 +290,7 @@ namespace client {
         
         //Pattern
         auto const vec_data_def =
-        identifier  > "=" > +(wfc) > ';'
+        group_name  > "=" > +(wfc) > ';'
         ;
         auto const vec_stmt_def =
         (lit("V") | lit("Vector"))
@@ -252,14 +312,21 @@ namespace client {
         > "}"
         > "}"
         ;
+        auto const annotation_def =
+        lit ("Ann")
+        > lit("{*")
+        > *(char_ - lit("*}"))
+        > lit("*}")
+        ;
         auto const pat_stmt_def =
         vec_stmt
         | "W" > identifier > ";"
-
+        | annotation
         | shift_stmt
         | macro_call
         | proc_call
         | cond_stmt
+        | x3::omit [identifier >> *(char_ - ":") >> char_(":")]
         ;
         auto const pattern_def = lit("Pattern")
         > identifier
@@ -315,6 +382,8 @@ namespace client {
         | patburst
         | patexec
         | pattern
+        | x3::omit[scanstruct]
+        | x3::omit[header]
         ;
         auto const session_def = *block;
         auto const stil_session_def = version
@@ -329,15 +398,19 @@ namespace client {
                             group_name,
                             group_item,
                             groups,
+                            scanstruct,
+                            header,
                             eu,
                             wfc,
                             tim_event,
                             sig_time_event,
+                            sig_time_events,
                             wavetable,
                             timing,
                             patburst,
                             patexec,
                             pattern,
+                            annotation,
                             vec_data,
                             vec_stmt,
                             cond_stmt,
@@ -356,6 +429,7 @@ namespace client {
         struct stil_session_class : error_handler_base, x3::annotate_on_success {};
         struct signal_item_class : x3::annotate_on_success {};
         struct group_item_class : x3::annotate_on_success {};
+        struct vec_stmt_class: x3::annotate_on_success {};
     }
 }
 

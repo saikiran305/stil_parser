@@ -15,10 +15,11 @@ BOOST_FUSION_ADAPT_STRUCT(client::ast::stil_ast,
                           version, blocks
                           )
 //BOOST_FUSION_ADAPT_STRUCT(client::ast::time_event, time, values)
-BOOST_FUSION_ADAPT_STRUCT(client::ast::sig_tim_event, name, values, events)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::sig_tim_event, values, events)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::sig_tim_events, name, sig_event_list)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::wavetable, name, period, sig_events)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::timing,
-                          wavetables
+                          name, wavetables
                           )
 BOOST_FUSION_ADAPT_STRUCT(client::ast::patburst, name, patlist)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::patexec, timingblock, burst)
@@ -29,4 +30,5 @@ BOOST_FUSION_ADAPT_STRUCT(client::ast::macro_call, name, stmts)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::proc_call, name, stmts)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::cond_stmt, stmts)
 BOOST_FUSION_ADAPT_STRUCT(client::ast::shift_stmt, stmts)
+BOOST_FUSION_ADAPT_STRUCT(client::ast::vec_stmt, stmts)
 #endif // AST_ADAPTED_HPP
