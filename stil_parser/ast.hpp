@@ -127,7 +127,7 @@ namespace client {
             std::string value;
         };
         struct vec_stmt : x3::position_tagged {
-        std::vector<vec_data> stmts;
+            std::vector<vec_data> stmts;
         };
         struct cond_stmt {
             std::vector<vec_data> stmts;
@@ -172,7 +172,7 @@ namespace client {
         //struct proc_call : macro_call {};
         struct macros : std::list<macro_proc_def> {};
         struct procs : macros {};
-
+        
         struct pattern {
             std::string name;
             std::vector<pat_stmt> pats;

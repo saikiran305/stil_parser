@@ -1,4 +1,4 @@
-#include "compiler.hpp"
+#include "vecgen.hpp"
 #include "ast.hpp"
 #include <algorithm>
 #include <vector>
@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <set>
 namespace client {
-    namespace vecgen {
+    namespace patgen {
         
         void sigtiming::add_events(std::list<ast::time_event> const& events, std::string const& values)
         {
@@ -24,13 +24,6 @@ namespace client {
             sampletimes.assign( s.begin(), s.end() );
         }
         
-//        sigtiming::sigtiming(ast::sig_tim_event const& x)
-//        {
-//            std::cout << "Construct with sig_tim_event \n";
-//            add_events(x.events, x.values);
-//            //std::sort(sampletimes.begin(),
-//            //        sampletimes.end());
-//        }
         
         sigtiming::sigtiming(std::list<ast::time_event> const& events, std::string const& values)
         {
@@ -54,15 +47,8 @@ namespace client {
         }
         
         void sigtiming::get_value(int t, char value, bool& is_valid, char& out) {
-            //std::cout << "SampleTimes: ";
-            //for (auto const& t:sampletimes) std::cout << t << " ";
-            //std::cout << std::endl;
             if (std::binary_search(sampletimes.begin(), sampletimes.end(), t))
             {
-                //                std::cout << "Search : "
-                //                << "t : " << t << " "
-                //                << "value : " << value <<
-                //                std:: endl;
                 if ( vec_values[t].find(value) == vec_values[t].end() ) {
                     // not found
                     is_valid = false;
@@ -79,29 +65,29 @@ namespace client {
             }
         }
         
-        bool compiler::find_signal(std::string const &x){
+        bool vecgen::find_signal(std::string const &x){
             auto e = signals.find(x);
             if (e == signals.end()) return  false;
             return true;
         }
         
-        bool compiler::find_group(const std::string &x)
+        bool vecgen::find_group(const std::string &x)
         {
             auto e = groups.find(x);
             if (e == groups.end()) return false;
             return true;
         }
         
-        void compiler::add_group(const std::string &x, const std::string &y)
+        void vecgen::add_group(const std::string &x, const std::string &y)
         {
             groups[x].push_back(y);
         }
-        void compiler::add_signal(ast::signal const &x)
+        void vecgen::add_signal(ast::signal const &x)
         {
             signals[x.name] = x.type;
             work_vec[x.name] = 'X';
         }
-        bool compiler::operator()(ast::signal const &x) {
+        bool vecgen::operator()(ast::signal const &x) {
             if (find_signal(x.name)) {
                 error_handler(x, "Signal Redeclared: " +x.name);
                 return false;
@@ -109,7 +95,7 @@ namespace client {
             add_signal(x);
             return true;
         }
-        bool compiler::operator()(const ast::signals &x) {
+        bool vecgen::operator()(const ast::signals &x) {
             
             for (auto const& s:x)
             {
@@ -117,7 +103,7 @@ namespace client {
             }
             return true;
         }
-        bool compiler::operator()(const ast::groups &x)
+        bool vecgen::operator()(const ast::groups &x)
         {
             for (auto const& s:x)
             {
@@ -127,7 +113,7 @@ namespace client {
             return true;
         }
         
-        bool compiler::operator()(const ast::group &x)
+        bool vecgen::operator()(const ast::group &x)
         {
             for (auto const& s:x.items)
             {
@@ -148,7 +134,7 @@ namespace client {
             return true;
         }
         
-        bool compiler::operator()(const ast::timing &x)
+        bool vecgen::operator()(const ast::timing &x)
         {
             for (auto const& s:x.wavetables)
                 if (!(*this)(s)) return  false;
@@ -156,7 +142,7 @@ namespace client {
             
         }
         
-        void compiler::add_sigtiming(std::string const& name, std::list<ast::time_event> const& events, std::string const& values)
+        void vecgen::add_sigtiming(std::string const& name, std::list<ast::time_event> const& events, std::string const& values)
         {
             if ( wavetables[cur_wft].sigtimings.find(name) == wavetables[cur_wft].sigtimings.end() ) {
                 // not found
@@ -167,13 +153,11 @@ namespace client {
             }
         }
         
-        bool compiler::operator()(const ast::wavetable &x)
+        bool vecgen::operator()(const ast::wavetable &x)
         {
             cur_wft = x.name;
             wavetables[x.name] = wavetable();
             wavetables[x.name].period = x.period;
-            
-            std::cout << "Wavetable : " << x.name << std::endl;
             
             for (auto const& elem:x.sig_events) {
                 for (auto const& s:elem.sig_event_list) {
@@ -183,20 +167,13 @@ namespace client {
                         for (auto const& sig:groups[elem.name]) {
                             
                             add_sigtiming(sig, s.events, s.values);
-                            //wavetables[x.name].sigtimings[sig] = sigtiming(s.events, s.values);
-                            std::cout << "Signal : " << sig << std::endl;
-                            //wavetables[x.name].sigtimings[sig].print();
                         }
                     }
                     else   {
-                        //                    std::cout << "Adding "
-                        //                    << s.name << " to table : " << x.name
-                        //                    << std::endl;
-                        //
+                        
                         add_sigtiming(elem.name, s.events, s.values);
                         
-                        //wavetables[x.name].sigtimings[s.name] = sigtiming(s);
-                        //wavetables[x.name].sigtimings[s.name].print();
+                        
                     }
                     if (!(*this)(s)) return  false;
                 }
@@ -208,21 +185,21 @@ namespace client {
             return true;
         }
         
-        bool compiler::operator()(const ast::time_event &x)
+        bool vecgen::operator()(const ast::time_event &x)
         {
             if( !(std::find(sampletimes.begin(), sampletimes.end(), x.first) != sampletimes.end()))
                 sampletimes.push_back(x.first);
             return  true;
         }
         
-        bool compiler::operator()(const ast::sig_tim_event &x)
+        bool vecgen::operator()(const ast::sig_tim_event &x)
         {
             for (auto const& s:x.events)
                 if (!(*this)(s)) return  false;
             return  true;
         }
         
-        bool compiler::start(const ast::session &x)
+        bool vecgen::start(const ast::session &x)
         {
             fout.open(outfilename);
             std::cout << "Opening outfile " << outfilename << std::endl;
@@ -234,13 +211,13 @@ namespace client {
             return true;
         }
         
-        void compiler::print_signals() const
+        void vecgen::print_signals() const
         {
             std::cout << "=====Signals=======\n";
             for(auto v : signals) std::cout << v.first << ":" << v.second << std::endl;
             std::cout << "===================\n";
         }
-        void compiler::print_groups() const
+        void vecgen::print_groups() const
         {
             std::cout << "=====Groups=======\n";
             for(auto v : groups) {
@@ -252,7 +229,7 @@ namespace client {
             
         }
         
-        void compiler::print_wavetables() const {
+        void vecgen::print_wavetables() const {
             std::cout << "======Wavetables======\n";
             for(auto t: wavetables) {
                 std::cout << "Wavetable: " << t.first
@@ -276,19 +253,19 @@ namespace client {
             }
         }
         
-        bool compiler::operator()(const ast::patburst &x) {
+        bool vecgen::operator()(const ast::patburst &x) {
             return true;
         }
         
-        bool compiler::operator()(const ast::patexec &x) {
+        bool vecgen::operator()(const ast::patexec &x) {
             write_header();
             return true;
         }
-        bool compiler::operator()(const ast::annotation &x) {
+        bool vecgen::operator()(const ast::annotation &x) {
             write_comment(x);
             return true;
         }
-        bool compiler::operator()(const ast::vec_stmt &x) {
+        bool vecgen::operator()(const ast::vec_stmt &x) {
             for (auto const& s:x.stmts)
                 if (!(*this)(s)) return  false;
             write_comment("Vector");
@@ -297,19 +274,19 @@ namespace client {
         }
         
         
-        bool compiler::operator()(const ast::cur_wft &x) {
+        bool vecgen::operator()(const ast::cur_wft &x) {
             cur_wft = x;
             sampletimes.clear();
             return true;
         }
         
-        bool compiler::operator()(const ast::pattern &x) {
+        bool vecgen::operator()(const ast::pattern &x) {
             for (auto const& s:x.pats)
                 if (!(boost::apply_visitor(*this,s))) return  false;
             return true;
         }
         
-        void compiler::vec_proc(std::string const& sig, char val)
+        void vecgen::vec_proc(std::string const& sig, char val)
         {
             bool valid = false;
             char out;
@@ -321,11 +298,6 @@ namespace client {
                 
                 if (valid)
                 {
-                    //                    std::cout <<
-                    //                    "Sig : " << sig << " "
-                    //                    "t : " << t << " "
-                    //                    "val : " << val << " "
-                    //                    "out : " << out << std::endl;
                     sampletimes.push_back(t);
                     cur_vec[t][sig] = out;
                     
@@ -333,7 +305,7 @@ namespace client {
             }
         }
         
-        bool compiler::operator()(const ast::vec_data &x) {
+        bool vecgen::operator()(const ast::vec_data &x) {
             
             if (find_group(x.name))
             {
@@ -348,12 +320,12 @@ namespace client {
             //write_vec(t);
             return true;
         }
-        void compiler::write_comment(std::string const& msg)
+        void vecgen::write_comment(std::string const& msg)
         {
             
             fout << "//" << msg  << std::endl;
         }
-        void compiler::write_vec() {
+        void vecgen::write_vec() {
             //std::sort(sampletimes.begin(),
             //        sampletimes.end());
             std::set<int> s( sampletimes.begin(), sampletimes.end() );
@@ -361,55 +333,56 @@ namespace client {
             for (auto const& t:sampletimes) {
                 fout << t << " ";
                 for (auto const& elem:work_vec) {
-                    auto const& val = cur_vec[t][elem.first];
-                    if (val) {
-                        fout << val;
-                        work_vec[elem.first] = val;
-                    } else fout << work_vec[elem.first];
+                    if (cur_vec[t][elem.first])
+                        work_vec[elem.first] = cur_vec[t][elem.first];
+                    fout << work_vec[elem.first];
+                    //                    auto const& val = cur_vec[t][elem.first];
+                    //                    if (val) {
+                    //                        fout << val;
+                    //                        work_vec[elem.first] = val;
+                    //                    } else fout << work_vec[elem.first];
                     
                 }
-                fout << std::endl;
+                fout << "\n";
             }
             
         }
         
-        void compiler::write_header() {
+        void vecgen::write_header() {
             for (auto const& elem:work_vec)
                 fout << elem.first << " ";
             fout << std::endl;
         }
         
-        bool compiler::operator()(const ast::procs &x) {
+        bool vecgen::operator()(const ast::procs &x) {
             for (auto const& proc:x) {
                 procs[proc.name] = proc;
             }
             return true;
         }
         
-        bool compiler::operator()(const ast::macros &x) {
+        bool vecgen::operator()(const ast::macros &x) {
             for (auto const& macro:x) {
                 macros[macro.name] = macro;
             }
             return true;
         }
         
-        bool compiler::operator()(const ast::macro_call &x) {
+        bool vecgen::operator()(const ast::macro_call &x) {
             
             cur_macro = x.name;
             macro_proc = 1;
             macro_proc_max_len = find_max_len(x.stmts);
-            //std::cout << "Macro call : Len : " << macro_proc_max_len << std::endl;
             cur_args = x.stmts;
             write_comment("Macro Call : " + cur_macro);
             for (auto const& s:macros[x.name].stmts)
                 if (!(boost::apply_visitor(*this,s))) return  false;
             return true;
         }
-        bool compiler::operator()(const ast::proc_call &x) {
+        bool vecgen::operator()(const ast::proc_call &x) {
             cur_proc = x.name;
             macro_proc = 0;
             macro_proc_max_len = find_max_len(x.stmts);
-            //std::cout << "Proc call : Len : " << macro_proc_max_len << std::endl;
             cur_args = x.stmts;
             write_comment("Proc Call : " + cur_proc);
             for (auto const& s:macros[x.name].stmts)
@@ -418,12 +391,12 @@ namespace client {
             return true;
         }
         
-        bool compiler::operator()(const ast::cond_stmt &x) {
+        bool vecgen::operator()(const ast::cond_stmt &x) {
             for (auto const& s:x.stmts)
                 if (!(*this)(s)) return  false;
             return true;
         }
-        void compiler::vec_proc_wrap(std::string const& sig, char const& val) {
+        void vecgen::vec_proc_wrap(std::string const& sig, char const& val) {
             
             if (find_group(sig))
             {
@@ -437,9 +410,8 @@ namespace client {
             //write_vec(t);
         }
         
-        bool compiler::operator()(const ast::shift_stmt &x)
+        bool vecgen::operator()(const ast::shift_stmt &x)
         {
-            std::cout << "Shift stmt \n";
             // Process non params first
             for (auto const& elem:x.stmts)
                 if (elem.value != "#") vec_proc(elem.name, elem.value.at(0));
@@ -456,7 +428,7 @@ namespace client {
             return true;
         }
         
-        int compiler::find_max_len(std::list<ast::vec_data> const& stmts)
+        int vecgen::find_max_len(std::list<ast::vec_data> const& stmts)
         {
             std::vector<int> lengths;
             for (auto const& vec:stmts) lengths.push_back(vec.value.length());

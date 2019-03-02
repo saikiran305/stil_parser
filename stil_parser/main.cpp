@@ -4,7 +4,7 @@
 #include "error_handler.hpp"
 #include "config.hpp"
 #include "skipper.hpp"
-#include "compiler.hpp"
+#include "vecgen.hpp"
 #include <fstream>
 #include <boost/algorithm/string.hpp>
 
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 
     std::string outfilename = filename;
     boost::replace_all(outfilename, ".stil", "_parsed.stil");
-    client::vecgen::compiler compiler(error_handler, outfilename);
+    client::patgen::vecgen vecgen(error_handler, outfilename);
     
     auto const parser =
     with<client::parser::error_handler_tag>(std::ref(error_handler))
@@ -69,10 +69,10 @@ int main(int argc, char **argv)
         
         //for (auto block:ast.blocks) boost::apply_visitor(v,block);
         
-        if (compiler.start(ast.blocks)) {
+        if (vecgen.start(ast.blocks)) {
             //compiler.print_signals();
-            compiler.print_groups();
-            compiler.print_wavetables();
+            vecgen.print_groups();
+            vecgen.print_wavetables();
         }
         return 0;
     }

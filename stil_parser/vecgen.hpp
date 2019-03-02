@@ -1,5 +1,5 @@
-#ifndef COMPILER_HPP
-#define COMPILER_HPP
+#ifndef VECGEN_HPP
+#define VECGEN_HPP
 #include "ast.hpp"
 #include "error_handler.hpp"
 
@@ -11,14 +11,14 @@
 #include <string>
 
 namespace client {
-    namespace vecgen {
+    namespace patgen {
         namespace  x3 = boost::spirit::x3;
         
         struct sigtiming {
             std::vector<int> sampletimes;
             std::map<int, std::map<char, char> > vec_values;
             sigtiming() {}
-//            sigtiming(ast::sig_tim_event const& x);
+            //            sigtiming(ast::sig_tim_event const& x);
             sigtiming(std::list<ast::time_event> const& events, std::string const& values);
             void add_events(std::list<ast::time_event> const& events, std::string const& values);
             void print();
@@ -32,7 +32,7 @@ namespace client {
         };
         
         
-        class compiler
+        class vecgen
         {
         public:
             typedef  bool result_type;
@@ -45,13 +45,13 @@ namespace client {
             
             
             template<typename ErrorHandler>
-            compiler(
-                     ErrorHandler const& error_handler,
-                     std::string const& outfilename
-                     ) : error_handler(
-                                       [&](x3::position_tagged pos, std::string const& msg)
-                                       {error_handler(pos,msg);}
-                                       ),
+            vecgen(
+                   ErrorHandler const& error_handler,
+                   std::string const& outfilename
+                   ) : error_handler(
+                                     [&](x3::position_tagged pos, std::string const& msg)
+                                     {error_handler(pos,msg);}
+                                     ),
             outfilename(outfilename)
             {}
             
@@ -89,7 +89,7 @@ namespace client {
             std::string outfilename;
             std::ofstream fout;
             bool vec_changed;
-
+            
             
             std::map<std::string, ast::signal_type> signals;
             std::map<std::string, std::vector<std::string>> groups;
@@ -121,4 +121,4 @@ namespace client {
         };
     }
 }
-#endif // COMPILER_HPP
+#endif // VECGEN_HPP
