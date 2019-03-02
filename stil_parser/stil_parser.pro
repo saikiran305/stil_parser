@@ -8,7 +8,7 @@ SOURCES += \
         main.cpp \
     skipper.cpp \
     stil.cpp \
-    compiler.cpp
+    vecgen.cpp
 
 HEADERS += \
     ast.hpp \
@@ -20,7 +20,7 @@ HEADERS += \
     skipper_def.hpp \
     stil.hpp \
     stil_def.hpp \
-    compiler.hpp
+    vecgen.hpp
 
 DISTFILES += \
     test.stil
